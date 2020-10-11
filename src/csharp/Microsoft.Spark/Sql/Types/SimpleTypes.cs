@@ -86,7 +86,17 @@ namespace Microsoft.Spark.Sql.Types
                 return null;
             }
 
-            return new Date(new DateTime((int)obj * TimeSpan.TicksPerDay + s_unixTimeEpoch.Ticks));
+            //In Spark 2.X the calendar is Julian and due to some mismatch on dates prior to 1583
+            //we run into an issue where can end up earlier than 0001-01-01 which is the mindate for the C# DateTime object.
+            //This issue is resolved in Spark 3 when they switch to the Gregorian calendar.
+            int numDaysSince1970 = (int)obj;
+            if (numDaysSince1970 <= -719164)
+            {
+                numDaysSince1970 = -719162;
+            }
+                
+
+            return new Date(new DateTime((int)numDaysSince1970 * TimeSpan.TicksPerDay + s_unixTimeEpoch.Ticks));
         }
     }
 
@@ -114,8 +124,20 @@ namespace Microsoft.Spark.Sql.Types
             // Known issue that if the original type is "long" and its value can be fit into the
             // "int", Pickler will serialize the value as int.
             long val = (obj is long v) ? v : (int)obj;
+
+            
+            /*
+             * we have to clamp ticks so it is >=0.  This issue occurs for the dates 0001-01-01 and 0001-01-02.
+             * This is because spark 2.x uses the Julian calendar which is 2 days off from gregorian calendar used by c# for dates prior to ~1500.
+             * so for 0001-01-01 an 0001-01-02 in the Julian Calendar we'll actually end up with 'negative' dates
+             * in the Gregorian calendar which will cause C# to throw exception
+             */
+ 
+            long ticks = val * 10 + DateType.s_unixTimeEpoch.Ticks;
+            
+            
             return new Timestamp(
-                new DateTime(val * 10 + DateType.s_unixTimeEpoch.Ticks, DateTimeKind.Utc));
+                new DateTime(ticks>=0 ? ticks : 0, DateTimeKind.Utc));
         }
     }
 
