@@ -175,6 +175,7 @@ namespace Microsoft.Spark
             var _pythonBroadcast = (JvmObjectReference)javaSparkContext.Jvm.CallStaticJavaMethod(
                 "org.apache.spark.api.python.PythonRDD",
                 "setupBroadcast",
+		javaSparkContext,
                 _path);
 
             if (encryptionEnabled)
