@@ -100,8 +100,9 @@ namespace Microsoft.Spark.Sql
                     _args[i] = rowConstructor.GetRow();
                 }
             }
-
-            return new Row(_args, _parent.GetSchema());
+            object[] newArgs = new object[_args.Length];
+            _args.CopyTo(newArgs, 0);
+            return new Row(newArgs, _parent.GetSchema());
         }
 
         /// <summary>
