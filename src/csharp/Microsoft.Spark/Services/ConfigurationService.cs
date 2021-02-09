@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using static System.Environment;
 using Microsoft.Spark.Utils;
 
 namespace Microsoft.Spark.Services
@@ -49,6 +50,9 @@ namespace Microsoft.Spark.Services
             }
         }
 
+        internal static bool IsDatabricks { get; } =
+            !string.IsNullOrEmpty(GetEnvironmentVariable("DATABRICKS_RUNTIME_VERSION"));
+        
         /// <summary>
         /// Returns the port number for socket communication between JVM and CLR.
         /// </summary>
